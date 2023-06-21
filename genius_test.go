@@ -1,12 +1,12 @@
 package genius
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestGenius(_ *testing.T) {
+func TestGenius(t *testing.T) {
 	source := `
 {
 	"name":"jaronnie", 
@@ -20,16 +20,8 @@ func TestGenius(_ *testing.T) {
 	]
 }
 `
-
-	var genius map[string]interface{}
-
-	err := json.Unmarshal([]byte(source), &genius)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	g := New(genius, WithDelimiter("-"))
+	g, err := NewFromRawJSON([]byte(source), WithDelimiter("-"))
+	assert.Nil(t, err)
 
 	keys := g.GetAllKeys()
 	fmt.Println(keys)
