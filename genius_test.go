@@ -69,4 +69,13 @@ func TestGenius(_ *testing.T) {
 		fmt.Println(err)
 	}
 	fmt.Println(g.Get("me"))
+
+	err = g.Append("me", "jaronnie", "jaronnie2")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(g.Get("me"))
+
+	err = g.Append("skills", map[string]interface{}{"Golang": "100"})
+	fmt.Println(g.Get("skills"))
 }

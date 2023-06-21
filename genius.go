@@ -37,7 +37,7 @@ func NewFromRawJSON(source []byte, opts ...Opt) (*Genius, error) {
 }
 
 func (g *Genius) Get(key string) interface{} {
-	return g.find(key)
+	return g.get(key)
 }
 
 func (g *Genius) GetAllKeys() []string {
@@ -70,22 +70,8 @@ func (g *Genius) Sub(key string) *Genius {
 }
 
 func (g *Genius) Set(key string, value interface{}) error {
-	//if g.IsIndexPath(key) {
-	//	return g.setIndex(key, value)
-	//} else {
-	//	return g.set(key, value)
-	//}
 	return g.set(key, value)
 }
-
-//func (g *Genius) set(key string, value interface{}) {
-//	path := strings.Split(key, ".")
-//	lastKey := path[len(path)-1]
-//	deepestMap := deepSearch(g.source, path[0:len(path)-1])
-//
-//	// set innermost value
-//	deepestMap[lastKey] = value
-//}
 
 func (g *Genius) set(key string, value interface{}) error {
 	path := strings.Split(key, g.delimiter)
@@ -111,13 +97,32 @@ func (g *Genius) set(key string, value interface{}) error {
 }
 
 func (g *Genius) IsSet(key string) bool {
-	find := g.find(key)
+	find := g.get(key)
 	return find != nil
 }
 
 // Append append data to a slice
-func (g *Genius) Append() error {
-	return nil
+func (g *Genius) Append(key string, values ...interface{}) error {
+	val := reflect.ValueOf(g.get(key))
+	kind := val.Kind()
+	if kind == reflect.Slice || kind == reflect.Array {
+		var sliceValue []interface{}
+		length := val.Len()
+		if length == 0 {
+			return errors.New("not support empty array")
+		}
+		for j := 0; j < length; j++ {
+			sliceValue = append(sliceValue, val.Index(j).Interface())
+		}
+		for _, v := range values {
+			if reflect.TypeOf(v).Kind() != reflect.TypeOf(sliceValue[0]).Kind() {
+				return errors.New("not support different typo")
+			}
+			sliceValue = append(sliceValue, v)
+		}
+		return g.Set(key, sliceValue)
+	}
+	return errors.New("only array support append")
 }
 
 func (g *Genius) flattenAndMergeMap(shadow map[string]bool, m map[string]interface{}, prefix string) map[string]bool {
@@ -151,7 +156,7 @@ func (g *Genius) flattenAndMergeMap(shadow map[string]bool, m map[string]interfa
 	return shadow
 }
 
-func (g *Genius) find(key string) interface{} {
+func (g *Genius) get(key string) interface{} {
 	var val interface{}
 
 	path := strings.Split(key, g.delimiter)
@@ -204,7 +209,7 @@ func (g *Genius) searchSliceWithPathPrefixes(
 	pathIndex int,
 	path []string,
 ) interface{} {
-	// if the prefixKey is not a number or it is out of bounds of the slice
+	// if the prefixKey is not a number, or it is out of bounds of the slice
 	index, err := strconv.Atoi(prefixKey)
 	if err != nil || len(sourceSlice) <= index {
 		return nil
@@ -320,37 +325,6 @@ func (g *Genius) searchMap(source map[string]interface{}, path []string) interfa
 	}
 	return nil
 }
-
-// deepSearch scans deep maps, following the key indexes listed in the
-// sequence "path".
-// The last value is expected to be another map, and is returned.
-//
-// In case intermediate keys do not exist, or map to a non-map value,
-// a new map is created and inserted, and the search continues from there:
-// the initial map "m" may be modified!
-//func deepSearch(m map[string]interface{}, path []string) map[string]interface{} {
-//	for _, k := range path {
-//		m2, ok := m[k]
-//		if !ok {
-//			// intermediate key does not exist
-//			// => create it and continue from there
-//			m3 := make(map[string]interface{})
-//			m[k] = m3
-//			m = m3
-//			continue
-//		}
-//		m3, ok := m2.(map[string]interface{})
-//		if !ok {
-//			// intermediate key is a value
-//			// => replace with a new map
-//			m3 = make(map[string]interface{})
-//			m[k] = m3
-//		}
-//		// continue search from here
-//		m = m3
-//	}
-//	return m
-//}
 
 func deepSearchStrong(m map[string]interface{}, path []string) interface{} {
 	if len(path) == 0 {
