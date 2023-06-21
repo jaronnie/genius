@@ -28,7 +28,7 @@ func main() {
 	g, err := genius.NewFromRawJSON([]byte(`
 {
     "name":"jaronnie",
-    "age": 23
+    "age": 23,
     "skills": ["golang", "python", "c"]
 }`))
 	if err != nil {
