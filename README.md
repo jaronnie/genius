@@ -38,6 +38,7 @@ func main() {
 	fmt.Println(g.Get("name"))
 	fmt.Println(g.Get("skills"))
 	fmt.Println(g.Get("skills.0"))
-	fmt.Println(g.Set("skills.0", "go"))
+	_ = g.Set("skills.0", "go")
+	fmt.Println(g.Get("skills.0"))
 }
 ```
