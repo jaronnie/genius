@@ -74,4 +74,10 @@ func TestGenius(t *testing.T) {
 		fmt.Println(err)
 	}
 	fmt.Println(g.Get("skills"))
+
+	err = g.Set("a", map[string]interface{}{"b": []int{1, 2, 3}})
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(g.Get("a"))
 }

@@ -92,13 +92,14 @@ func (g *Genius) set(key string, value interface{}) error {
 				return errors.Errorf("not index [%d] in array", idx)
 			}
 		}
+	default:
+		return errors.Errorf("not suppport set key [%v]", key)
 	}
 	return nil
 }
 
 func (g *Genius) IsSet(key string) bool {
-	find := g.get(key)
-	return find != nil
+	return g.get(key) != nil
 }
 
 // Append append data to a slice
