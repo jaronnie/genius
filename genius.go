@@ -78,6 +78,10 @@ func (g *Genius) set(key string, value interface{}) error {
 	lastKey := path[len(path)-1]
 	configMap := deepSearchStrong(g.source, path[0:len(path)-1])
 
+	if configMap == nil {
+		configMap = deepSearch(g.source, path[0:len(path)-1])
+	}
+
 	switch x := configMap.(type) {
 	case map[string]interface{}:
 		x[lastKey] = value
@@ -325,6 +329,37 @@ func (g *Genius) searchMap(source map[string]interface{}, path []string) interfa
 		}
 	}
 	return nil
+}
+
+// deepSearch scans deep maps, following the key indexes listed in the
+// sequence "path".
+// The last value is expected to be another map, and is returned.
+//
+// In case intermediate keys do not exist, or map to a non-map value,
+// a new map is created and inserted, and the search continues from there:
+// the initial map "m" may be modified!
+func deepSearch(m map[string]interface{}, path []string) map[string]interface{} {
+	for _, k := range path {
+		m2, ok := m[k]
+		if !ok {
+			// intermediate key does not exist
+			// => create it and continue from there
+			m3 := make(map[string]interface{})
+			m[k] = m3
+			m = m3
+			continue
+		}
+		m3, ok := m2.(map[string]interface{})
+		if !ok {
+			// intermediate key is a value
+			// => replace with a new map
+			m3 = make(map[string]interface{})
+			m[k] = m3
+		}
+		// continue search from here
+		m = m3
+	}
+	return m
 }
 
 func deepSearchStrong(m map[string]interface{}, path []string) interface{} {
