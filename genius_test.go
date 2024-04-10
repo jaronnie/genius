@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGenius(t *testing.T) {
+func TestGeniusFromRawJson(t *testing.T) {
 	source := `
 {
 	"name":"jaronnie", 
@@ -80,4 +80,14 @@ func TestGenius(t *testing.T) {
 		fmt.Println(err)
 	}
 	fmt.Println(g.Get("a"))
+}
+
+func TestGeniusFromToml(t *testing.T) {
+	source := `
+Name = "jaronnie"
+`
+	g, err := NewFromToml([]byte(source))
+	assert.Nil(t, err)
+
+	fmt.Println(g.Get("Name"))
 }
