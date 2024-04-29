@@ -2,6 +2,7 @@ package genius
 
 import (
 	"encoding/json"
+
 	"github.com/pelletier/go-toml"
 )
 

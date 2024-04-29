@@ -1,7 +1,6 @@
 package genius
 
 import (
-	"fmt"
 	"log"
 	"testing"
 )
@@ -19,5 +18,5 @@ Name = "jaronnie"
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(toml))
+	t.Log(string(toml))
 }
