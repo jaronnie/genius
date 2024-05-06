@@ -20,3 +20,19 @@ Name = "jaronnie"
 	}
 	t.Log(string(toml))
 }
+
+func TestEncodeToYaml(t *testing.T) {
+	source := `
+Name = "jaronnie"
+`
+	g, err := NewFromToml([]byte(source))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	yaml, err := g.EncodeToYaml()
+	if err != nil {
+		log.Fatal(err)
+	}
+	t.Log(string(yaml))
+}
