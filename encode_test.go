@@ -5,6 +5,18 @@ import (
 	"testing"
 )
 
+func TestNewFromYaml(t *testing.T) {
+	source := `
+Name: jaronnie
+`
+	g, err := NewFromYaml([]byte(source))
+	if err != nil {
+		t.Error(err)
+	}
+	get := g.Get("Name")
+	t.Log(get)
+}
+
 func TestEncodeToToml(t *testing.T) {
 	source := `
 Name = "jaronnie"
