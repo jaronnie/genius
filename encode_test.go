@@ -36,3 +36,19 @@ Name = "jaronnie"
 	}
 	t.Log(string(yaml))
 }
+
+func TestEncodeToJSON(t *testing.T) {
+	source := `
+Name = "jaronnie"
+`
+	g, err := NewFromToml([]byte(source))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	json, err := g.EncodeToJSON()
+	if err != nil {
+		log.Fatal(err)
+	}
+	t.Log(string(json))
+}

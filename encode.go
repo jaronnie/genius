@@ -1,6 +1,8 @@
 package genius
 
 import (
+	"encoding/json"
+
 	"github.com/pelletier/go-toml"
 	"gopkg.in/yaml.v3"
 )
@@ -19,4 +21,10 @@ func (g *Genius) EncodeToYaml() ([]byte, error) {
 	settings := g.GetAllSettings()
 
 	return yaml.Marshal(settings)
+}
+
+func (g *Genius) EncodeToJSON() ([]byte, error) {
+	settings := g.GetAllSettings()
+
+	return json.Marshal(settings)
 }
