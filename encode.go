@@ -12,11 +12,11 @@ func (g *Genius) EncodeToType(configType string) ([]byte, error) {
 	settings := g.GetAllSettings()
 
 	switch configType {
-	case "json":
+	case "json", ".json":
 		return json.Marshal(settings)
-	case "yaml", "yml":
+	case "yaml", "yml", ".yaml", ".yml":
 		return yaml.Marshal(settings)
-	case "toml":
+	case "toml", ".toml":
 		tree, err := toml.TreeFromMap(settings)
 		if err != nil {
 			return nil, err
