@@ -21,20 +21,20 @@ func NewFromType(source []byte, configType string, opts ...Opt) (*Genius, error)
 	var genius map[string]interface{}
 
 	switch configType {
-	case "json":
+	case "json", ".json":
 		err := json.Unmarshal(source, &genius)
 		if err != nil {
 			return nil, err
 		}
 		return New(genius, opts...), nil
-	case "yaml", "yml":
+	case "yaml", "yml", ".yaml", ".yml":
 		err := yaml.Unmarshal(source, &genius)
 		if err != nil {
 			return nil, err
 		}
 
 		return New(genius, opts...), nil
-	case "toml":
+	case "toml", ".toml":
 		tree, err := toml.LoadBytes(source)
 		if err != nil {
 			return nil, err
