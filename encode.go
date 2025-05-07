@@ -47,3 +47,8 @@ func (g *Genius) EncodeToJSON() ([]byte, error) {
 
 	return json.Marshal(settings)
 }
+
+func (g *Genius) EncodeToPrettyJSON() ([]byte, error) {
+	settings := g.GetAllSettings()
+	return json.MarshalIndent(settings, "", "  ")
+}

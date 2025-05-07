@@ -52,13 +52,14 @@ Name = "jaronnie"
 func TestEncodeToJSON(t *testing.T) {
 	source := `
 Name = "jaronnie"
+Age = 18
 `
 	g, err := NewFromToml([]byte(source))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	json, err := g.EncodeToJSON()
+	json, err := g.EncodeToPrettyJSON()
 	if err != nil {
 		log.Fatal(err)
 	}
