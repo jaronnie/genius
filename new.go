@@ -14,7 +14,7 @@ func New(source map[string]interface{}, opts ...Opt) *Genius {
 		opt(option)
 	}
 	defaultOption(option)
-	return &Genius{source, option.delimiter}
+	return &Genius{source: source, delimiter: option.delimiter}
 }
 
 func NewFromType(source []byte, configType string, opts ...Opt) (*Genius, error) {

@@ -90,4 +90,8 @@ Name = "jaronnie"
 	assert.Nil(t, err)
 
 	fmt.Println(g.Get("Name"))
+
+	g.Del("Name")
+
+	fmt.Println(g.GetAllSettings())
 }

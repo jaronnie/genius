@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-
 	"github.com/spf13/cast"
 )
 
@@ -47,6 +46,10 @@ func (g *Genius) Sub(key string) *Genius {
 		return subMapx
 	}
 	return nil
+}
+
+func (g *Genius) Del(key string) {
+	delete(g.source, key)
 }
 
 func (g *Genius) Set(key string, value interface{}) error {

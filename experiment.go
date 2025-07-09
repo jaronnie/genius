@@ -1,6 +1,10 @@
 package genius
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/samber/lo"
+)
 
 // GetOuterKeys Experiment Feature
 func (g *Genius) GetOuterKeys(key string) []string {
@@ -29,5 +33,5 @@ func (g *Genius) GetOuterKeys(key string) []string {
 			}
 		}
 	}
-	return removeDuplicateElement(outerKeys)
+	return lo.Uniq(outerKeys)
 }
