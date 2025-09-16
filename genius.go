@@ -11,11 +11,11 @@ import (
 )
 
 type Genius struct {
-	source    map[string]interface{}
+	source    map[string]any
 	delimiter string
 }
 
-func (g *Genius) Get(key string) interface{} {
+func (g *Genius) Get(key string) any {
 	return g.get(key)
 }
 
@@ -30,7 +30,7 @@ func (g *Genius) GetAllKeys() []string {
 	return a
 }
 
-func (g *Genius) GetAllSettings() map[string]interface{} {
+func (g *Genius) GetAllSettings() map[string]any {
 	return g.source
 }
 
@@ -49,14 +49,60 @@ func (g *Genius) Sub(key string) *Genius {
 }
 
 func (g *Genius) Del(key string) {
-	delete(g.source, key)
+	path := strings.Split(key, g.delimiter)
+
+	// Handle simple case for root level keys
+	if len(path) == 1 {
+		delete(g.source, key)
+		return
+	}
+
+	// Handle nested keys
+	lastKey := path[len(path)-1]
+	parentPath := path[0 : len(path)-1]
+
+	// Find the parent container
+	parentContainer := deepSearchStrong(g.source, parentPath)
+	if parentContainer == nil {
+		// Parent doesn't exist, nothing to delete
+		return
+	}
+
+	switch x := parentContainer.(type) {
+	case map[string]any:
+		delete(x, lastKey)
+	case []any:
+		// Handle array deletion by index
+		idx, err := strconv.Atoi(lastKey)
+		if err != nil || idx < 0 || idx >= len(x) {
+			// Invalid index, nothing to delete
+			return
+		}
+		// Remove element at index by creating a new slice without that element
+		newSlice := make([]any, 0, len(x)-1)
+		newSlice = append(newSlice, x[:idx]...)
+		newSlice = append(newSlice, x[idx+1:]...)
+
+		// Update the parent with the new slice
+		if len(parentPath) == 0 {
+			// This shouldn't happen as we handle root case above, but just in case
+			return
+		}
+		grandParentPath := parentPath[0 : len(parentPath)-1]
+		grandParentKey := parentPath[len(parentPath)-1]
+		grandParent := deepSearchStrong(g.source, grandParentPath)
+
+		if grandParentMap, ok := grandParent.(map[string]any); ok {
+			grandParentMap[grandParentKey] = newSlice
+		}
+	}
 }
 
-func (g *Genius) Set(key string, value interface{}) error {
+func (g *Genius) Set(key string, value any) error {
 	return g.set(key, value)
 }
 
-func (g *Genius) set(key string, value interface{}) error {
+func (g *Genius) set(key string, value any) error {
 	path := strings.Split(key, g.delimiter)
 	lastKey := path[len(path)-1]
 	configMap := deepSearchStrong(g.source, path[0:len(path)-1])
@@ -66,9 +112,9 @@ func (g *Genius) set(key string, value interface{}) error {
 	}
 
 	switch x := configMap.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		x[lastKey] = value
-	case []interface{}:
+	case []any:
 		// is this an array
 		// lastKey has to be a num
 		idx, err := strconv.Atoi(lastKey)
@@ -90,11 +136,11 @@ func (g *Genius) IsSet(key string) bool {
 }
 
 // Append append data to a slice
-func (g *Genius) Append(key string, values ...interface{}) error {
+func (g *Genius) Append(key string, values ...any) error {
 	val := reflect.ValueOf(g.get(key))
 	kind := val.Kind()
 	if kind == reflect.Slice || kind == reflect.Array {
-		var sliceValue []interface{}
+		var sliceValue []any
 		length := val.Len()
 		if length == 0 {
 			return errors.New("not support empty array")
@@ -113,7 +159,7 @@ func (g *Genius) Append(key string, values ...interface{}) error {
 	return errors.New("only array support append")
 }
 
-func (g *Genius) flattenAndMergeMap(shadow map[string]bool, m map[string]interface{}, prefix string) map[string]bool {
+func (g *Genius) flattenAndMergeMap(shadow map[string]bool, m map[string]any, prefix string) map[string]bool {
 	if shadow != nil && prefix != "" && shadow[prefix] {
 		// prefix is shadowed => nothing more to flatten
 		return shadow
@@ -122,16 +168,16 @@ func (g *Genius) flattenAndMergeMap(shadow map[string]bool, m map[string]interfa
 		shadow = make(map[string]bool)
 	}
 
-	var m2 map[string]interface{}
+	var m2 map[string]any
 	if prefix != "" {
 		prefix += g.delimiter
 	}
 	for k, val := range m {
 		fullKey := prefix + k
 		switch v := val.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			m2 = v
-		case map[interface{}]interface{}:
+		case map[any]any:
 			m2 = cast.ToStringMap(v)
 		default:
 			// immediate value
@@ -144,8 +190,8 @@ func (g *Genius) flattenAndMergeMap(shadow map[string]bool, m map[string]interfa
 	return shadow
 }
 
-func (g *Genius) get(key string) interface{} {
-	var val interface{}
+func (g *Genius) get(key string) any {
+	var val any
 
 	path := strings.Split(key, g.delimiter)
 	nested := len(path) > 1
@@ -162,7 +208,7 @@ func (g *Genius) get(key string) interface{} {
 	return nil
 }
 
-func (g *Genius) searchIndexableWithPathPrefixes(source interface{}, path []string) interface{} {
+func (g *Genius) searchIndexableWithPathPrefixes(source any, path []string) any {
 	if len(path) == 0 {
 		return source
 	}
@@ -171,11 +217,11 @@ func (g *Genius) searchIndexableWithPathPrefixes(source interface{}, path []stri
 	for i := len(path); i > 0; i-- {
 		prefixKey := strings.Join(path[0:i], g.delimiter)
 
-		var val interface{}
+		var val any
 		switch sourceIndexable := source.(type) {
-		case []interface{}:
+		case []any:
 			val = g.searchSliceWithPathPrefixes(sourceIndexable, prefixKey, i, path)
-		case map[string]interface{}:
+		case map[string]any:
 			val = g.searchMapWithPathPrefixes(sourceIndexable, prefixKey, i, path)
 		}
 		if val != nil {
@@ -192,11 +238,11 @@ func (g *Genius) searchIndexableWithPathPrefixes(source interface{}, path []stri
 // This function is part of the searchIndexableWithPathPrefixes recurring search and
 // should not be called directly from functions other than searchIndexableWithPathPrefixes.
 func (g *Genius) searchSliceWithPathPrefixes(
-	sourceSlice []interface{},
+	sourceSlice []any,
 	prefixKey string,
 	pathIndex int,
 	path []string,
-) interface{} {
+) any {
 	// if the prefixKey is not a number, or it is out of bounds of the slice
 	index, err := strconv.Atoi(prefixKey)
 	if err != nil || len(sourceSlice) <= index {
@@ -211,9 +257,9 @@ func (g *Genius) searchSliceWithPathPrefixes(
 	}
 
 	switch n := next.(type) {
-	case map[interface{}]interface{}:
+	case map[any]any:
 		return g.searchIndexableWithPathPrefixes(cast.ToStringMap(n), path[pathIndex:])
-	case map[string]interface{}, []interface{}:
+	case map[string]any, []any:
 		return g.searchIndexableWithPathPrefixes(n, path[pathIndex:])
 	default:
 		// got a value but nested key expected, do nothing and look for next prefix
@@ -228,11 +274,11 @@ func (g *Genius) searchSliceWithPathPrefixes(
 // This function is part of the searchIndexableWithPathPrefixes recurring search and
 // should not be called directly from functions other than searchIndexableWithPathPrefixes.
 func (g *Genius) searchMapWithPathPrefixes(
-	sourceMap map[string]interface{},
+	sourceMap map[string]any,
 	prefixKey string,
 	pathIndex int,
 	path []string,
-) interface{} {
+) any {
 	next, ok := sourceMap[prefixKey]
 	if !ok {
 		return nil
@@ -245,9 +291,9 @@ func (g *Genius) searchMapWithPathPrefixes(
 
 	// Nested case
 	switch n := next.(type) {
-	case map[interface{}]interface{}:
+	case map[any]any:
 		return g.searchIndexableWithPathPrefixes(cast.ToStringMap(n), path[pathIndex:])
-	case map[string]interface{}, []interface{}:
+	case map[string]any, []any:
 		return g.searchIndexableWithPathPrefixes(n, path[pathIndex:])
 	default:
 		// got a value but nested key expected, do nothing and look for next prefix
@@ -262,8 +308,8 @@ func (g *Genius) searchMapWithPathPrefixes(
 // e.g., if "foo.bar" has a value in the given map, it “shadows”
 //
 //	"foo.bar.baz" in a lower-priority map
-func (g *Genius) isPathShadowedInDeepMap(path []string, m map[string]interface{}) string {
-	var parentVal interface{}
+func (g *Genius) isPathShadowedInDeepMap(path []string, m map[string]any) string {
+	var parentVal any
 	for i := 1; i < len(path); i++ {
 		parentVal = g.searchMap(m, path[0:i])
 		if parentVal == nil {
@@ -271,9 +317,9 @@ func (g *Genius) isPathShadowedInDeepMap(path []string, m map[string]interface{}
 			return ""
 		}
 		switch parentVal.(type) {
-		case map[interface{}]interface{}:
+		case map[any]any:
 			continue
-		case map[string]interface{}:
+		case map[string]any:
 			continue
 		default:
 			// parentVal is a regular value which shadows "path"
@@ -286,7 +332,7 @@ func (g *Genius) isPathShadowedInDeepMap(path []string, m map[string]interface{}
 // searchMap recursively searches for a value for path in source map.
 // Returns nil if not found.
 // Note: This assumes that the path entries and map keys are lower cased.
-func (g *Genius) searchMap(source map[string]interface{}, path []string) interface{} {
+func (g *Genius) searchMap(source map[string]any, path []string) any {
 	if len(path) == 0 {
 		return source
 	}
@@ -300,9 +346,9 @@ func (g *Genius) searchMap(source map[string]interface{}, path []string) interfa
 
 		// Nested case
 		switch v := next.(type) {
-		case map[interface{}]interface{}:
+		case map[any]any:
 			return g.searchMap(cast.ToStringMap(v), path[1:])
-		case map[string]interface{}:
+		case map[string]any:
 			// Type assertion is safe here since it is only reached
 			// if the type of `next` is the same as the type being asserted
 			return g.searchMap(v, path[1:])
@@ -321,22 +367,22 @@ func (g *Genius) searchMap(source map[string]interface{}, path []string) interfa
 // In case intermediate keys do not exist, or map to a non-map value,
 // a new map is created and inserted, and the search continues from there:
 // the initial map "m" may be modified!
-func deepSearch(m map[string]interface{}, path []string) map[string]interface{} {
+func deepSearch(m map[string]any, path []string) map[string]any {
 	for _, k := range path {
 		m2, ok := m[k]
 		if !ok {
 			// intermediate key does not exist
 			// => create it and continue from there
-			m3 := make(map[string]interface{})
+			m3 := make(map[string]any)
 			m[k] = m3
 			m = m3
 			continue
 		}
-		m3, ok := m2.(map[string]interface{})
+		m3, ok := m2.(map[string]any)
 		if !ok {
 			// intermediate key is a value
 			// => replace with a new map
-			m3 = make(map[string]interface{})
+			m3 = make(map[string]any)
 			m[k] = m3
 		}
 		// continue search from here
@@ -345,14 +391,14 @@ func deepSearch(m map[string]interface{}, path []string) map[string]interface{} 
 	return m
 }
 
-func deepSearchStrong(m map[string]interface{}, path []string) interface{} {
+func deepSearchStrong(m map[string]any, path []string) any {
 	if len(path) == 0 {
 		return m
 	}
 	var currentPath string
 	stepArray := false
-	var currentArray []interface{}
-	var currentEntity interface{}
+	var currentArray []any
+	var currentEntity any
 	for _, k := range path {
 		if len(currentPath) == 0 {
 			currentPath = k
@@ -367,7 +413,7 @@ func deepSearchStrong(m map[string]interface{}, path []string) interface{} {
 			if len(currentArray) <= idx {
 				return nil
 			}
-			m3, ok := currentArray[idx].(map[string]interface{})
+			m3, ok := currentArray[idx].(map[string]any)
 			if !ok {
 				return nil
 			}
@@ -381,10 +427,10 @@ func deepSearchStrong(m map[string]interface{}, path []string) interface{} {
 				// intermediate key does not exist
 				return nil
 			}
-			m3, ok := m2.(map[string]interface{})
+			m3, ok := m2.(map[string]any)
 			if !ok {
 				// is this an array
-				m4, ok := m2.([]interface{})
+				m4, ok := m2.([]any)
 				if ok {
 					// continue search from here
 					currentArray = m4
@@ -414,7 +460,7 @@ func (g *Genius) IsIndexPath(key string) bool {
 			// Determine whether the key is an array
 			join := strings.Join(split[:i], g.delimiter)
 			switch g.Get(join).(type) {
-			case []interface{}:
+			case []any:
 				return true
 			}
 		}
