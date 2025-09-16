@@ -1,13 +1,21 @@
+version: "2"
 run:
-  go: '1.19'
+  modules-download-mode: readonly
 linters:
+  default: none
   enable:
     - thelper
-    - gofumpt
     - tparallel
     - unconvert
-    - unparam
+    - unused
     - wastedassign
-    - revive
-    - tagliatelle
-    - misspell
+    - whitespace
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/jaronnie/genius

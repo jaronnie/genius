@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func New(source map[string]interface{}, opts ...Opt) *Genius {
+func New(source map[string]any, opts ...Opt) *Genius {
 	option := &Option{}
 	for _, opt := range opts {
 		opt(option)
@@ -18,7 +18,7 @@ func New(source map[string]interface{}, opts ...Opt) *Genius {
 }
 
 func NewFromType(source []byte, configType string, opts ...Opt) (*Genius, error) {
-	var genius map[string]interface{}
+	var genius map[string]any
 
 	switch configType {
 	case "json", ".json":
@@ -48,7 +48,7 @@ func NewFromType(source []byte, configType string, opts ...Opt) (*Genius, error)
 }
 
 func NewFromRawJSON(source []byte, opts ...Opt) (*Genius, error) {
-	var genius map[string]interface{}
+	var genius map[string]any
 
 	err := json.Unmarshal(source, &genius)
 	if err != nil {
@@ -58,7 +58,7 @@ func NewFromRawJSON(source []byte, opts ...Opt) (*Genius, error) {
 }
 
 func NewFromToml(source []byte, opts ...Opt) (*Genius, error) {
-	var genius map[string]interface{}
+	var genius map[string]any
 
 	tree, err := toml.LoadBytes(source)
 	if err != nil {
@@ -70,7 +70,7 @@ func NewFromToml(source []byte, opts ...Opt) (*Genius, error) {
 }
 
 func NewFromYaml(source []byte, opts ...Opt) (*Genius, error) {
-	var genius map[string]interface{}
+	var genius map[string]any
 
 	err := yaml.Unmarshal(source, &genius)
 	if err != nil {
