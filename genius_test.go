@@ -145,3 +145,41 @@ func TestGeniusDelSubstructure(t *testing.T) {
 
 	fmt.Println("Final state:", g.GetAllSettings())
 }
+
+func TestGenius_GetTopLevelKeys(t *testing.T) {
+	type fields struct {
+		source    map[string]any
+		delimiter string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []string
+	}{
+		{
+			name: "test1",
+			fields: fields{
+				source: map[string]any{
+					"name": "jaronnie",
+					"age":  23,
+					"skills": map[string]any{
+						"Golang": 90,
+						"Python": 5,
+						"c":      5,
+					},
+				},
+				delimiter: "-",
+			},
+			want: []string{"name", "age", "skills"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Genius{
+				source:    tt.fields.source,
+				delimiter: tt.fields.delimiter,
+			}
+			assert.ElementsMatch(t, tt.want, g.GetTopLevelKeys(), "GetTopLevelKeys()")
+		})
+	}
+}

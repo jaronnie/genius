@@ -30,6 +30,14 @@ func (g *Genius) GetAllKeys() []string {
 	return a
 }
 
+func (g *Genius) GetTopLevelKeys() []string {
+	a := make([]string, 0, len(g.source))
+	for k := range g.source {
+		a = append(a, k)
+	}
+	return a
+}
+
 func (g *Genius) GetAllSettings() map[string]any {
 	return g.source
 }
